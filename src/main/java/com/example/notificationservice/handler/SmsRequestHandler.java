@@ -47,8 +47,17 @@ public class SmsRequestHandler {
                 newSms = smsRequestService.save(newSms);
                 SmsRequestKafkaEvent event = smsServicesAdaptor.covertApiToEvent(newSms);
                 SmsApiResponse response = smsRequestProducer.sendMessage(event);
-                logger.info("SMS sent successfully.");
-                return ResponseEntity.status(HttpStatus.valueOf(200)).body(response);
+                if(isPresent(request.getNumber())){
+                    logger.info("Number is BlackListed...WhiteList to send SMS...");
+                    response.setId(newSms.getId());
+                    response.setComment("Number is BlackListed");
+                    return ResponseEntity.status(HttpStatus.valueOf(200)).body(response);
+                }
+                else{
+
+                    logger.info("SMS sent successfully.");
+                    return ResponseEntity.status(HttpStatus.valueOf(200)).body(response);
+                }
             } catch (Exception e) {
                 logger.error("Failed to send SMS", e);
                 return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
